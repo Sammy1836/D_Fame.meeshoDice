@@ -1,0 +1,9 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+input:-webkit-autofill {
+    background-color: #fff !important; /* Change this to your desired background color */
+    color: #000 !important; /* Change this to your desired text color */
+    transition: background-color 5000s ease-in-out 0s; /* Prevent flickering */
+}
