@@ -1,0 +1,39 @@
+<!-- templates/input_form.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Initial Recommendation Input</title>
+</head>
+<body>
+    <h1>Enter Your Information</h1>
+    <form action="/initial_recommend" method="post">
+        <label for="user_id">User ID:</label><br>
+        <input type="number" id="user_id" name="user_id" required><br><br>
+
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name" required><br><br>
+
+        <label for="age">Age:</label><br>
+        <input type="number" id="age" name="age" required><br><br>
+
+        <label for="gender">Gender:</label><br>
+        <select id="gender" name="gender" required>
+            <option value="">Select...</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+        </select><br><br>
+
+        <label for="location">Location:</label><br>
+        <select id="location" name="location" required>
+            <option value="">Select...</option>
+            <option value="Delhi">Delhi</option>
+            <option value="Mumbai">Mumbai</option>
+            <option value="Chennai">Chennai</option>
+            <!-- Add more locations as needed -->
+        </select><br><br>
+
+        <input type="submit" value="Get Recommendations">
+    </form>
+</body>
+</html>

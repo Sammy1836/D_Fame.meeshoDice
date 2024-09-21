@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IndianRupee } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 
 const categories = [
     "Women Ethnic",
