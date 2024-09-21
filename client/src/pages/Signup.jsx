@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { setUser } from "../redux/userSlice";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { useDispatch, useSelector } from "react-redux";
 import {
     Baby,
     CircleUserRound,
@@ -11,21 +14,29 @@ import {
     EyeOff,
 } from "lucide-react";
 
-function SignUpSignInPage() {
-    const [isSignUp, setIsSignUp] = useState(true);
+function SignUpSignInPage({ isSignUp: initialIsSignUp }) {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    const location = useLocation();
+    const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
+
+    useEffect(() => {
+        setIsSignUp(location.pathname === "/signup");
+    }, [location]);
+
     const [formData, setFormData] = useState({
         name: "",
         email: "",
         password: "",
         gender: "",
         age: "",
-        // city: "",
+        city: "",
     });
     const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false); // Password visibility toggle
+    const [showPassword, setShowPassword] = useState(false);
 
     const toggleForm = () => {
-        setIsSignUp(!isSignUp);
+        navigate(isSignUp ? "/signin" : "/signup");
     };
 
     const togglePasswordVisibility = () => {
@@ -40,13 +51,11 @@ function SignUpSignInPage() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setIsLoading(true);
-        console.log("hi1");
         const url = isSignUp
             ? "http://localhost:5001/signup"
             : "http://localhost:5001/signin";
-        console.log("hi2");
+
         try {
-            console.log(formData);
             const response = await fetch(url, {
                 method: "POST",
                 headers: {
@@ -56,10 +65,29 @@ function SignUpSignInPage() {
             });
 
             const data = await response.json();
-            console.log(data);
 
             if (response.ok) {
-                alert(isSignUp ? "Signup successful" : "Signin successful");
+                const successMessage = isSignUp
+                    ? "Signup successful"
+                    : "Signin successful";
+                alert(successMessage);
+
+                if (!isSignUp) {
+                    // Only set user data for signin
+                    dispatch(
+                        setUser({
+                            name: data.user.name,
+                            email: data.user.email,
+                            token: data.token,
+                        })
+                    );
+                    localStorage.setItem("token", data.token);
+                    localStorage.setItem("name", data.user.name);
+                    localStorage.setItem("email", data.user.email);
+                }
+
+                // Redirect to home page after successful authentication
+                window.location.href = "/";
             } else {
                 alert(data.message || "Something went wrong");
             }
@@ -136,7 +164,7 @@ function SignUpSignInPage() {
                             <Input
                                 id="password"
                                 name="password"
-                                type={showPassword ? "text" : "password"} // Toggle input type
+                                type={showPassword ? "text" : "password"}
                                 value={formData.password}
                                 onChange={handleInputChange}
                                 placeholder="Enter your password"
@@ -206,7 +234,7 @@ function SignUpSignInPage() {
                                     />
                                 </div>
                             </div>
-                            {/* <div className="mb-4">
+                            <div className="mb-4">
                                 <label
                                     htmlFor="city"
                                     className="block text-sm font-medium text-gray-700 ml-2"
@@ -227,7 +255,7 @@ function SignUpSignInPage() {
                                         className="w-full bg-transparent focus:outline-none"
                                     />
                                 </div>
-                            </div> */}
+                            </div>
                         </>
                     )}
                     <Button

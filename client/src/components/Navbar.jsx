@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { setUser, clearUser } from "../redux/userSlice";
 import {
     Search,
     ShoppingBag,
@@ -12,19 +14,31 @@ import { NavLink } from "react-router-dom";
 
 const Navbar = () => {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-    const [isSignedIn, setIsSignedIn] = useState(false); // Change this based on your authentication logic
-    const [username, setUsername] = useState("John Doe"); // Simulated username, replace with real data
+    const dispatch = useDispatch();
+    const { name, email } = useSelector((state) => state.user);
 
-    // Toggle dropdown visibility
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const storedName = localStorage.getItem("name");
+        const storedEmail = localStorage.getItem("email");
+
+        if (token && storedName && storedEmail) {
+            dispatch(setUser({ name: storedName, email: storedEmail, token }));
+        }
+    }, [dispatch]);
+
     const toggleDropdown = () => {
         setIsDropdownOpen((prev) => !prev);
     };
 
-    // Dummy signout function, replace with real logic
     const handleSignOut = () => {
-        setIsSignedIn(false);
-        setUsername("");
-        // Add actual sign-out logic here
+        localStorage.removeItem("token");
+        localStorage.removeItem("name");
+        localStorage.removeItem("email");
+        dispatch(clearUser());
+        setIsDropdownOpen(false);
+        // Redirect to home page after sign out
+        window.location.href = "/";
     };
 
     return (
@@ -63,18 +77,17 @@ const Navbar = () => {
                                 className="flex items-center space-x-2 focus:outline-none"
                             >
                                 <User className="h-5 w-5" />
-                                <span>{isSignedIn ? username : "Profile"}</span>
+                                <span>{name || "Profile"}</span>
                                 <ChevronDown className="h-4 w-4" />
                             </button>
 
-                            {/* Dropdown */}
                             {isDropdownOpen && (
                                 <div className="absolute right-0 mt-2 w-48 bg-white border rounded-lg shadow-lg z-10">
-                                    {isSignedIn ? (
+                                    {name ? (
                                         <>
                                             <div className="px-4 py-2 border-b">
                                                 <p className="text-gray-700">
-                                                    {username}
+                                                    {name}
                                                 </p>
                                             </div>
                                             <button

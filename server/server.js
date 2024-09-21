@@ -1,9 +1,12 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
-const cors = require("cors"); // Add this line to include CORS
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const app = express();
 const PORT = 5001;
+
+const JWT_SECRET = "SUP3RS3CRET";
 
 // Enable CORS for all routes
 app.use(cors());
@@ -31,9 +34,9 @@ const writeUsersToFile = (users) => {
 
 // Signup endpoint
 app.post("/signup", (req, res) => {
-    const { name, email, password, gender, age } = req.body;
+    const { name, email, password, gender, age, city } = req.body;
 
-    if (!name || !email || !password || !gender || !age) {
+    if (!name || !email || !password || !gender || !age || !city) {
         return res.status(400).json({ message: "All fields are required" });
     }
 
@@ -48,7 +51,7 @@ app.post("/signup", (req, res) => {
     }
 
     // Create new user
-    const newUser = { name, email, password, gender, age };
+    const newUser = { name, email, password, gender, age, city };
     users.push(newUser);
     writeUsersToFile(users);
 
@@ -75,7 +78,16 @@ app.post("/signin", (req, res) => {
         return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    res.status(200).json({ message: "Signin successful", user });
+    // Generate JWT token
+    const token = jwt.sign({ email: user.email, name: user.name }, JWT_SECRET, {
+        expiresIn: "1h",
+    });
+
+    res.status(200).json({
+        message: "Signin successful",
+        user: { name: user.name, email: user.email },
+        token,
+    });
 });
 
 // Start server

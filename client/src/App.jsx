@@ -10,8 +10,15 @@ function App() {
             <BrowserRouter>
                 <Navbar />
                 <Routes>
-                    <Route path="/" element={<MeeshoLandingPage />}></Route>
-                    <Route path="/profile" element={<SignUpSignInPage />} />
+                    <Route path="/" element={<MeeshoLandingPage />} />
+                    <Route
+                        path="/signin"
+                        element={<SignUpSignInPage isSignUp={false} />}
+                    />
+                    <Route
+                        path="/signup"
+                        element={<SignUpSignInPage isSignUp={true} />}
+                    />
                 </Routes>
             </BrowserRouter>
         </>
