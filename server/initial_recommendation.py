@@ -1,136 +1,72 @@
 import sys
 import json
 import pandas as pd
-from sklearn.cluster import KMeans
-from datetime import datetime
-
-# 1. Load Data
+import numpy as np
 
 # Load Product Data
-product_data = pd.read_csv('product_data.csv')
-product_url_data = pd.read_csv('product_url.csv')
+product_data = pd.read_csv('meesho_all_products_data.csv')
 
-# Merge product data with product URLs
-product_data = pd.merge(product_data, product_url_data, on='product_id', how='left')
+def calculate_score(row):
+    try:
+        rating = float(row['Rating']) if row['Rating'] != 'N/A' else 0
+        reviews = int(row['Reviews']) if row['Reviews'] != 'N/A' else 0
+        return rating * np.log1p(reviews)
+    except:
+        return 0
 
-# Existing User Data (for clustering)
-existing_user_data = pd.read_csv('existing_user_data.csv')
+def is_product_for_gender(title, query, gender):
+    title_lower = title.lower()
+    query_lower = query.lower()
+    if gender == 'male':
+        return ('men' in title_lower or 'men' in query_lower) and not ('women' in title_lower or 'women' in query_lower)
+    elif gender == 'female':
+        return ('women' in title_lower or 'women' in query_lower) and not ('men' in title_lower or 'men' in query_lower)
+    return True  # If gender is unspecified, consider all products
 
-# Encode categorical variables
-existing_user_data_encoded = pd.get_dummies(existing_user_data, columns=['gender', 'location'])
+def recommend_initial(user_info, page=0, items_per_page=20):
+    user_gender = user_info['gender'].lower()
 
-# Segment users
-demographic_features = existing_user_data_encoded.drop(['user_id', 'name'], axis=1)
-kmeans = KMeans(n_clusters=5, random_state=42)
-existing_user_data_encoded['segment'] = kmeans.fit_predict(demographic_features)
-
-# Process 'product_details' to assign 'age_group', 'season', and 'gender' if not already present
-if 'age_group' not in product_data.columns:
-    product_data['age_group'] = product_data['product_details'].apply(lambda x: 'Kids' if 'kid' in str(x).lower() else 'Adult')
-
-if 'season' not in product_data.columns:
-    def assign_season(details):
-        details_lower = str(details).lower()
-        if 'winter' in details_lower:
-            return 'Winter'
-        elif 'summer' in details_lower:
-            return 'Summer'
-        elif 'monsoon' in details_lower:
-            return 'Monsoon'
-        elif 'autumn' in details_lower:
-            return 'Autumn'
-        elif 'spring' in details_lower:
-            return 'Spring'
-        else:
-            return 'All'
-    product_data['season'] = product_data['product_details'].apply(assign_season)
-
-if 'gender' not in product_data.columns:
-    def assign_gender(detail):
-        detail_lower = str(detail).lower()
-        if 'woman' in detail_lower or 'women' in detail_lower:
-            return 'Female'
-        elif 'man' in detail_lower or 'men' in detail_lower:
-            return 'Male'
-        else:
-            return 'Unisex'
-    product_data['gender'] = product_data['product_details'].apply(assign_gender)
-
-# Interaction Data
-interaction_data = pd.read_csv('interaction_data.csv')
-
-# Merge interaction data with user segments
-interaction_data = interaction_data.merge(existing_user_data_encoded[['user_id', 'segment']], on='user_id', how='left')
-
-# Popular Products per Segment
-popular_products = interaction_data.groupby(['segment', 'product_id']).size().reset_index(name='counts')
-top_products_per_segment = popular_products.sort_values(['segment', 'counts'], ascending=False).groupby('segment').head(10)
-
-# Season mapping based on location and month
-def get_season(location, month):
-    season_map = {
-        'Delhi': {12: 'Winter', 1: 'Winter', 2: 'Winter', 3: 'Spring', 4: 'Spring', 5: 'Summer', 6: 'Summer', 7: 'Monsoon', 8: 'Monsoon', 9: 'Autumn', 10: 'Autumn', 11: 'Autumn'},
-        'Mumbai': {12: 'Winter', 1: 'Winter', 2: 'Winter', 3: 'Summer', 4: 'Summer', 5: 'Summer', 6: 'Monsoon', 7: 'Monsoon', 8: 'Monsoon', 9: 'Monsoon', 10: 'Autumn', 11: 'Autumn'},
-        'Chennai': {12: 'Winter', 1: 'Winter', 2: 'Winter', 3: 'Summer', 4: 'Summer', 5: 'Summer', 6: 'Summer', 7: 'Monsoon', 8: 'Monsoon', 9: 'Monsoon', 10: 'Autumn', 11: 'Autumn'},
-    }
-    return season_map.get(location, {}).get(month, 'All')
-
-def recommend_initial(user_info, user_segment, top_products_per_segment, num_recommendations=5):
-    current_month = datetime.now().month
-    user_location = user_info['location']
-    user_age = user_info['age']
-    user_gender = user_info['gender']
-    user_age_group = 'Kids' if user_age <= 12 else 'Adult'
-    user_season = get_season(user_location, current_month)
-
-    eligible_products = product_data[
-        (
-            ((product_data['season'] == user_season) | (product_data['season'] == 'All')) &
-            ((product_data['age_group'] == user_age_group) | (product_data['age_group'] == 'All')) &
-            ((product_data['gender'] == user_gender) | (product_data['gender'] == 'Unisex'))
-        )
-    ]
-
-    segment_products = top_products_per_segment[top_products_per_segment['segment'] == user_segment]
-    segment_product_ids = segment_products['product_id']
-
-    recommended_products = eligible_products[eligible_products['product_id'].isin(segment_product_ids)]
-
-    if len(recommended_products) < num_recommendations:
-        additional_products = eligible_products[~eligible_products['product_id'].isin(recommended_products['product_id'])]
-        recommended_products = pd.concat([recommended_products, additional_products])
-
-    recommendations = recommended_products.head(num_recommendations).to_dict(orient='records')
+    # Apply gender filter and calculate scores
+    eligible_products = product_data[product_data.apply(lambda row: is_product_for_gender(row['Title'], row['Query'], user_gender), axis=1)].copy()
     
-    for rec in recommendations:
-        rec['product_image_url'] = rec.get('product_image_url', 'https://via.placeholder.com/300x300?text=No+Image')
-        rec['product_url'] = rec.get('product_url', '#')
+    # If no products match the gender, return all products (fallback)
+    if eligible_products.empty:
+        eligible_products = product_data.copy()
     
-    return recommendations
+    # Calculate score based on rating and reviews
+    eligible_products['score'] = eligible_products.apply(calculate_score, axis=1)
+
+    # Sort products by score and select recommendations for the current page
+    ranked_products = eligible_products.sort_values('score', ascending=False)
+    start = page * items_per_page
+    end = start + items_per_page
+    recommendations = ranked_products.iloc[start:end]
+
+    # Prepare the output
+    output = recommendations[['Title', 'Price', 'Rating', 'Reviews', 'Image URL', 'Product URL']].to_dict('records')
+
+    return output
 
 if __name__ == '__main__':
-    email, name, age, gender, city = sys.argv[1:]
+    email, name, age, gender, city, page = sys.argv[1:]
     
+    # Handle potential invalid inputs
+    try:
+        age = int(age)
+    except ValueError:
+        age = 0  # Default age if invalid
+
+    gender = gender.lower() if gender.lower() in ['male', 'female'] else 'female'
+    
+    page = int(page) if page.isdigit() else 0
+
     user_info = {
         'user_id': email,
         'name': name,
-        'age': int(age),
+        'age': age,
         'gender': gender,
         'location': city
     }
 
-    new_user_data = pd.DataFrame([user_info])
-    new_user_data_encoded = pd.get_dummies(new_user_data, columns=['gender', 'location'])
-
-    for col in demographic_features.columns:
-        if col not in new_user_data_encoded.columns:
-            new_user_data_encoded[col] = 0
-
-    extra_cols = [col for col in new_user_data_encoded.columns if col not in demographic_features.columns and col not in ['user_id', 'name']]
-    new_user_data_encoded.drop(columns=extra_cols, inplace=True)
-
-    new_user_features = new_user_data_encoded[demographic_features.columns]
-    user_segment = kmeans.predict(new_user_features)[0]
-
-    recommendations = recommend_initial(user_info, user_segment, top_products_per_segment)
+    recommendations = recommend_initial(user_info, page)
     print(json.dumps(recommendations))
