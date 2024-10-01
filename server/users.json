@@ -6,5 +6,77 @@
     "gender": "male",
     "age": "22",
     "city": "Patna"
+  },
+  {
+    "name": "Satyam Kumar",
+    "email": "satyamk1102@gmail.com",
+    "password": "GAY",
+    "gender": "male",
+    "age": "22",
+    "city": "Mumbai"
+  },
+  {
+    "name": "Abhiraj",
+    "email": "abhirajrs1123@gmail.com",
+    "password": "GAY",
+    "gender": "female",
+    "age": "22",
+    "city": "Chennai"
+  },
+  {
+    "name": "asjdhk asjhd",
+    "email": "asdfadfa@gmail.com",
+    "password": "GAY",
+    "gender": "male",
+    "age": "22",
+    "city": "Mumbai"
+  },
+  {
+    "name": "1",
+    "email": "hello@gmail.com",
+    "password": "GAY",
+    "gender": "male",
+    "age": "22",
+    "city": "Mumbai"
+  },
+  {
+    "name": "User1",
+    "email": "hello1@gmail.com",
+    "password": "GAY",
+    "gender": "female",
+    "age": "22",
+    "city": "Chennai"
+  },
+  {
+    "name": "sammer",
+    "email": "gay@gmail.com",
+    "password": "GAY",
+    "gender": "male",
+    "age": "25",
+    "city": "Mumbai"
+  },
+  {
+    "name": "abhiraj",
+    "email": "abhi1102@gmail.com",
+    "password": "GAY",
+    "gender": "female",
+    "age": "23",
+    "city": "Mumbai"
+  },
+  {
+    "name": "Satyam Kumar",
+    "email": "satyam@gmail.com",
+    "password": "satyam",
+    "gender": "female",
+    "age": "22",
+    "city": "Mumbai"
+  },
+  {
+    "name": "ishika sharma",
+    "email": "ishika@gmail.com",
+    "password": "sharma",
+    "gender": "female",
+    "age": "22",
+    "city": "Mumbai"
   }
 ]

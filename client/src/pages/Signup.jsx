@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { setUser } from "../redux/userSlice";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { useDispatch, useSelector } from "react-redux";
+import { Input } from "@/components/ui/Input";
+import { Button } from "@/components/ui/Button";
+import { useDispatch } from "react-redux";
 import {
     Baby,
     CircleUserRound,
@@ -73,21 +73,23 @@ function SignUpSignInPage({ isSignUp: initialIsSignUp }) {
                 alert(successMessage);
 
                 if (!isSignUp) {
-                    // Only set user data for signin
                     dispatch(
                         setUser({
                             name: data.user.name,
                             email: data.user.email,
                             token: data.token,
+                            age: data.user.age,
+                            gender: data.user.gender,
+                            city: data.user.city,
                         })
                     );
                     localStorage.setItem("token", data.token);
                     localStorage.setItem("name", data.user.name);
                     localStorage.setItem("email", data.user.email);
+                    navigate("/recommendations");
+                } else {
+                    navigate("/signin");
                 }
-
-                // Redirect to home page after successful authentication
-                window.location.href = "/";
             } else {
                 alert(data.message || "Something went wrong");
             }
